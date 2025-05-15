@@ -4,6 +4,8 @@ numpy
 scikit-learn
 tensorflow
 plotly
-fpdf
 openpyxl
+fpdf2
 google-generativeai
+kaleido
+
