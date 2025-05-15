@@ -34,7 +34,7 @@ else:
     st.warning("Gemini API Key not found or is placeholder. AI features will be disabled. Set GEMINI_API_KEY environment variable or update in code.")
 
 # --- Model Paths & Constants ---
-STANDARD_MODEL_PATH = "/home/ubuntu/model_files/standard_model.h5"
+STANDARD_MODEL_PATH = "standard_model.h5"  # Relative path for deployment
 STANDARD_MODEL_SEQUENCE_LENGTH = 60 # Default, will be updated if model loads
 if os.path.exists(STANDARD_MODEL_PATH):
     try:
