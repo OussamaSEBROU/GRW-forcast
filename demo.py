@@ -501,3 +501,5 @@ if download_report_button:
                 import traceback; st.error(traceback.format_exc())
     else:
         st.error("Run forecast, generate AI report, and ensure plot exists before downloading PDF.")
+
+
