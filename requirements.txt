@@ -5,4 +5,5 @@ scikit-learn
 tensorflow
 plotly
 fpdf
+openpyxl
 google-generativeai
