@@ -49,28 +49,31 @@ if os.path.exists(STANDARD_MODEL_PATH):
 def load_and_clean_data(uploaded_file_content):
     try:
         df = pd.read_excel(io.BytesIO(uploaded_file_content))
-        if df.shape[1] < 2: st.error("File must have at least two columns (Date, Level)."); return None
-        date_col = next((col for col in df.columns if any(kw in col.lower() for kw in ["date", "time"])), None)
-        level_col = next((col for col in df.columns if any(kw in col.lower() for kw in ["level", "groundwater", "gwl"])), None)
-        if not date_col: st.error("Cannot find Date column (e.g., named 'Date', 'Time')."); return None
-        if not level_col: st.error("Cannot find Level column (e.g., named 'Level', 'Groundwater Level')."); return None
-        st.success(f"Identified columns: Date=\"{date_col}\", Level=\"{level_col}\". Renaming to 'Date' and 'Level'.")
-        df = df.rename(columns={date_col: \"Date\", level_col: \"Level\"})[["Date", "Level"]]
-        df[\"Date\"] = pd.to_datetime(df[\"Date\"], errors=\"coerce\")
-        df[\"Level\"] = pd.to_numeric(df[\"Level\"], errors=\"coerce\")
+        if df.shape[1] < 2: st.error("Error: File must have at least two columns (Date, Level)."); return None
+        date_col, level_col = None, None
+        potential_date_cols = [col for col in df.columns if any(kw in col.lower() for kw in ["date", "time"])]
+        potential_level_cols = [col for col in df.columns if any(kw in col.lower() for kw in ["level", "groundwater", "gwl"])]
+        if not potential_date_cols: st.error("Error: Cannot find Date column (containing 'date' or 'time')."); return None
+        if not potential_level_cols: st.error("Error: Cannot find Level column (containing 'level', 'groundwater', 'gwl')."); return None
+        date_col, level_col = potential_date_cols[0], potential_level_cols[0]
+        st.success(f"Identified: Date=\'{date_col}\', Level=\'{level_col}\'. Renaming to 'Date', 'Level'.")
+        df = df.rename(columns={date_col: 'Date', level_col: 'Level'})[['Date', 'Level']]
+        try: df['Date'] = pd.to_datetime(df['Date'], errors='coerce')
+        except Exception as e: st.error(f"Error parsing Date: {e}."); return None
+        df['Level'] = pd.to_numeric(df['Level'], errors='coerce')
         initial_rows = len(df)
-        df.dropna(subset=[\"Date\", \"Level\"], inplace=True)
-        if len(df) < initial_rows: st.warning(f"Dropped {initial_rows - len(df)} rows with invalid/missing date or level values.")
-        if df.empty: st.error("No valid data remaining after cleaning."); return None
-        df = df.sort_values(by=\"Date\").reset_index(drop=True).drop_duplicates(subset=[\"Date\"], keep=\"first\")
-        if df[\"Level\"].isnull().any():
-            missing_before = df[\"Level\"].isnull().sum()
-            df[\"Level\"] = df[\"Level\"].interpolate(method=\"linear\", limit_direction=\"both\")
-            st.warning(f"Filled {missing_before} missing level values using linear interpolation.")
-        if df[\"Level\"].isnull().any(): st.error("Could not fill all missing values even after interpolation."); return None
-        st.success("Data loaded and cleaned successfully!")
+        df.dropna(subset=['Date', 'Level'], inplace=True)
+        if len(df) < initial_rows: st.warning(f"Dropped {initial_rows - len(df)} rows with invalid values.")
+        if df.empty: st.error("Error: No valid data left after cleaning."); return None
+        df = df.sort_values(by='Date').reset_index(drop=True).drop_duplicates(subset=['Date'], keep='first')
+        if df['Level'].isnull().any():
+            missing_count = df['Level'].isnull().sum()
+            st.warning(f"{missing_count} missing values found. Applying linear interpolation.")
+            df['Level'] = df['Level'].interpolate(method='linear', limit_direction='both')
+        if df['Level'].isnull().any(): st.error("Error: Could not fill all missing values."); return None
+        st.success("Data loaded and cleaned.")
         return df
-    except Exception as e: st.error(f"An unexpected error occurred during data loading/cleaning: {e}"); return None
+    except Exception as e: st.error(f"Error loading/cleaning data: {e}"); return None
 
 def create_sequences(data, sequence_length):
     X, y = [], []
