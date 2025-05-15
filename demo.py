@@ -20,18 +20,32 @@ import os
 st.set_page_config(page_title="Groundwater Forecast App", layout="wide")
 
 # --- Gemini API Configuration ---
-GEMINI_API_KEY = os.getenv("GEMINI_API_KEY", "Gemini_api_key")
+# --- Gemini API Configuration ---
+
+# Configure Gemini with your API key
+google_api_key = os.getenv("GOOGLE_API_KEY")
 gemini_configured = False
-if GEMINI_API_KEY and GEMINI_API_KEY != "Gemini_api_key":
+
+if google_api_key:
     try:
-        genai.configure(api_key=GEMINI_API_KEY)
-        gemini_model_report = genai.GenerativeModel("gemini-pro")
-        gemini_model_chat = genai.GenerativeModel("gemini-pro")
+        genai.configure(api_key=google_api_key)
+        
+        # Load Gemini model with custom configuration
+        model_text = genai.GenerativeModel(
+            model_name="gemini-2.0-flash-thinking-exp-01-21",
+            generation_config=genai.types.GenerationConfig(
+                temperature=0.7,
+                top_p=0.95,
+                top_k=40,
+                max_output_tokens=4000  # Increased token limit for deeper, longer responses
+            )
+        )
+        
         gemini_configured = True
     except Exception as e:
         st.error(f"Error configuring Gemini API: {e}. AI features might be limited.")
 else:
-    st.warning("Gemini API Key not found or is placeholder. AI features will be disabled. Set GEMINI_API_KEY environment variable or update in code.")
+    st.warning("Google API Key not found. AI features will be disabled. Set GOOGLE_API_KEY as an environment variable.")
 
 # --- Model Paths & Constants ---
 # Ensure this path is relative to the app.py file for deployment
