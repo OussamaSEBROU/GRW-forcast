@@ -41,7 +41,8 @@ except Exception as e:
 @st.cache_data
 def load_and_clean_data(uploaded_file_content):
     try:
-        df = pd.read_excel(io.BytesIO(uploaded_file_content))
+        # Explicitly use openpyxl engine for reading Excel files
+        df = pd.read_excel(io.BytesIO(uploaded_file_content), engine='openpyxl')
         if df.shape[1] < 2: st.error("Error: File must have at least two columns (Date, Level)."); return None
         date_col, level_col = None, None
         potential_date_cols = [col for col in df.columns if any(kw in col.lower() for kw in ["date", "time"])]
