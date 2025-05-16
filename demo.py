@@ -16,67 +16,67 @@ import base64
 import time
 import os
 
-# --- Page Configuration ---
+--- Page Configuration ---
+
 st.set_page_config(page_title="Groundwater Forecast App", layout="wide")
 
-# --- Gemini API Configuration ---
+--- Gemini API Configuration ---
 
-GEMINI_API_KEY = os.getenv("GOOGLE_API_KEY")
-gemini_configured = False
+GEMINI_API_KEY = os.getenv("GOOGLE_API_KEY") gemini_configured = False
 
-if GEMINI_API_KEY and GEMINI_API_KEY != "Gemini_api_key":
-    try:
-        # Configure Gemini with the API key
-        genai.configure(api_key=GEMINI_API_KEY)
-        
-        # Load Gemini models with custom generation settings
-        generation_config = genai.types.GenerationConfig(
-            temperature=0.7,
-            top_p=0.95,
-            top_k=40,
-            max_output_tokens=4000
-        )
-        
-        gemini_model_report = genai.GenerativeModel(
-            model_name="gemini-2.0-flash-thinking-exp-01-21",
-            generation_config=generation_config
-        )
-        
-        gemini_model_chat = genai.GenerativeModel(
-            model_name="gemini-2.0-flash-thinking-exp-01-21",
-            generation_config=generation_config
-        )
-        
-        gemini_configured = True
+if GEMINI_API_KEY and GEMINI_API_KEY != "Gemini_api_key": try: # Configure Gemini with the API key genai.configure(api_key=GEMINI_API_KEY)
 
-    except Exception as e:
-        st.error(f"Error configuring Gemini API: {e}. AI features might be limited.")
-else:
-    st.warning("Gemini API Key not found or is placeholder. AI features will be disabled. Set GEMINI_API_KEY environment variable or update in code.")
+# Load Gemini models with custom generation settings
+    generation_config = genai.types.GenerationConfig(
+        temperature=0.7,
+        top_p=0.95,
+        top_k=40,
+        max_output_tokens=4000
+    )
+
+    gemini_model_report = genai.GenerativeModel(
+        model_name="gemini-2.0-flash-thinking-exp-01-21",
+        generation_config=generation_config
+    )
+
+    gemini_model_chat = genai.GenerativeModel(
+        model_name="gemini-2.0-flash-thinking-exp-01-21",
+        generation_config=generation_config
+    )
+
+    gemini_configured = True
+
+except Exception as e:
+    st.error(f"Error configuring Gemini API: {e}. AI features might be limited.")
+
+else: st.warning("Gemini API Key not found or is placeholder. AI features will be disabled. Set GEMINI_API_KEY environment variable or update in code.")
+
+
 
 # --- Model Paths & Constants ---
 # Ensure this path is relative to the app.py file for deployment
-#STANDARD_MODEL_DIR = "model_files"
+STANDARD_MODEL_DIR = "model_files"
 STANDARD_MODEL_FILENAME = "standard_model.h5"
-STANDARD_MODEL_PATH = os.path.join(STANDARD_MODEL_FILENAME)
+STANDARD_MODEL_PATH = os.path.join(STANDARD_MODEL_DIR, STANDARD_MODEL_FILENAME)
 
 STANDARD_MODEL_SEQUENCE_LENGTH = 60 # Default, will be updated if model loads
 if os.path.exists(STANDARD_MODEL_PATH):
     try:
-        _std_model_temp = load_model(STANDARD_MODEL_PATH)
+        # Load model without compiling to avoid issues with custom/missing metrics like 'mse' string
+        _std_model_temp = load_model(STANDARD_MODEL_PATH, compile=False)
         STANDARD_MODEL_SEQUENCE_LENGTH = _std_model_temp.input_shape[1]
         del _std_model_temp
-        # st.info(f"Standard model loaded successfully from {STANDARD_MODEL_PATH}. Sequence length: {STANDARD_MODEL_SEQUENCE_LENGTH}")
+        # st.info(f"Standard model structure loaded successfully from {STANDARD_MODEL_PATH} to infer sequence length: {STANDARD_MODEL_SEQUENCE_LENGTH}")
     except Exception as e:
         st.warning(f"Could not load standard model from {STANDARD_MODEL_PATH} to infer sequence length: {e}. Using default {STANDARD_MODEL_SEQUENCE_LENGTH}.")
 else:
-    st.warning(f"Standard model file not found at relative path: {STANDARD_MODEL_PATH}. Please ensure it exists in the {STANDARD_MODEL_DIR} directory next to demo.py.")
+    st.warning(f"Standard model file not found at relative path: {STANDARD_MODEL_PATH}. Please ensure it exists in the {STANDARD_MODEL_DIR} directory next to app.py.")
 
 # --- Helper Functions ---
 @st.cache_data
 def load_and_clean_data(uploaded_file_content):
     try:
-        df = pd.read_excel(io.BytesIO(uploaded_file_content))
+        df = pd.read_excel(io.BytesIO(uploaded_file_content), engine="openpyxl")
         if df.shape[1] < 2: st.error("File must have at least two columns (Date, Level)."); return None
         date_col = next((col for col in df.columns if any(kw in col.lower() for kw in ["date", "time"])), None)
         level_col = next((col for col in df.columns if any(kw in col.lower() for kw in ["level", "groundwater", "gwl"])), None)
@@ -113,7 +113,8 @@ def load_keras_model_from_file(uploaded_file_obj, model_name_for_log):
     try:
         with open(temp_model_path, "wb") as f:
             f.write(uploaded_file_obj.getbuffer())
-        model = load_model(temp_model_path)
+        # Load model without compiling to avoid issues with custom/missing metrics like 'mse' string
+        model = load_model(temp_model_path, compile=False)
         sequence_length = model.input_shape[1]
         st.success(f"Loaded {model_name_for_log}. Inferred sequence length: {sequence_length}")
         return model, sequence_length
@@ -127,7 +128,8 @@ def load_keras_model_from_file(uploaded_file_obj, model_name_for_log):
 @st.cache_resource
 def load_standard_model_cached(path):
     try:
-        model = load_model(path)
+        # Load model without compiling to avoid issues with custom/missing metrics like 'mse' string
+        model = load_model(path, compile=False)
         sequence_length = model.input_shape[1]
         return model, sequence_length
     except Exception as e:
@@ -136,7 +138,7 @@ def load_standard_model_cached(path):
 
 def build_lstm_model(sequence_length, n_features=1):
     model = Sequential([LSTM(40, activation="relu", input_shape=(sequence_length, n_features)), Dropout(0.5), Dense(1)])
-    model.compile(optimizer="adam", loss="mean_squared_error")
+    model.compile(optimizer="adam", loss="mean_squared_error") # For training, we compile with loss
     return model
 
 def predict_with_dropout_uncertainty(model, last_sequence_scaled, n_steps, n_iterations, scaler, model_sequence_length):
@@ -271,7 +273,6 @@ def run_forecast_pipeline(df, model_choice, forecast_horizon, custom_model_file_
         if model_choice != "Train New Model":
             if use_custom_scaler_params_flag and custom_scaler_min_param is not None and custom_scaler_max_param is not None and custom_scaler_min_param < custom_scaler_max_param:
                 st.info(f"Using provided scaler parameters: Original Min={custom_scaler_min_param}, Original Max={custom_scaler_max_param}")
-                # Fit the scaler using the provided min/max to correctly set its internal state for transform and inverse_transform
                 scaler_obj.fit(np.array([[custom_scaler_min_param], [custom_scaler_max_param]]))
                 scaled_data = scaler_obj.transform(df["Level"].values.reshape(-1, 1))
             else:
@@ -309,7 +310,7 @@ def run_forecast_pipeline(df, model_choice, forecast_horizon, custom_model_file_
             st.success("Evaluation of trained model complete.")
         else: # Pre-trained model
             st.info("Step 4b: Evaluating Pre-trained Model (on last 20% of available sequences)...")
-            if len(X) > 5:
+            if len(X) > 5: # Ensure enough data for a meaningful pseudo-validation
                 val_split_idx = int(len(X) * 0.8)
                 X_val_pseudo, y_val_pseudo = X[val_split_idx:], y[val_split_idx:]
                 if len(X_val_pseudo) > 0:
@@ -318,8 +319,8 @@ def run_forecast_pipeline(df, model_choice, forecast_horizon, custom_model_file_
                     y_val_actual = scaler_obj.inverse_transform(y_val_pseudo)
                     evaluation_metrics = calculate_metrics(y_val_actual, val_predictions)
                     st.success("Pseudo-evaluation of pre-trained model complete.")
-                else: st.warning("Not enough data for pseudo-validation of pre-trained model.")
-            else: st.warning("Not enough data for pseudo-validation of pre-trained model.")
+                else: st.warning("Not enough data for pseudo-validation of pre-trained model (after split).")
+            else: st.warning("Not enough data for pseudo-validation of pre-trained model (total sequences too few).")
 
         st.info(f"Step 5: Forecasting Future {forecast_horizon} Steps (MC Dropout: {mc_iterations_param})...")
         last_sequence_scaled_for_pred = scaled_data[-model_sequence_length:]
@@ -327,7 +328,7 @@ def run_forecast_pipeline(df, model_choice, forecast_horizon, custom_model_file_
         st.success("Forecasting complete.")
 
         last_date = df["Date"].iloc[-1]
-        try: freq = pd.infer_freq(df["Date"]); freq = freq if freq else "D"
+        try: freq = pd.infer_freq(df["Date"].dropna()); freq = freq if freq else "D"
         except: freq = "D"
         try: date_offset = pd.tseries.frequencies.to_offset(freq)
         except ValueError: date_offset = pd.DateOffset(days=1)
@@ -443,7 +444,7 @@ if uploaded_data_file is not None:
             st.session_state.training_history = None; st.session_state.ai_report = None
             st.session_state.chat_history = []; st.session_state.scaler_object = None
             st.session_state.forecast_plot_fig = None
-            st.session_state.model_sequence_length = STANDARD_MODEL_SEQUENCE_LENGTH
+            st.session_state.model_sequence_length = STANDARD_MODEL_SEQUENCE_LENGTH # Reset sequence length on new data
             st.session_state.run_forecast_triggered = False
             st.rerun()
         else:
@@ -549,8 +550,6 @@ if download_report_button:
             try:
                 pdf = FPDF()
                 pdf.add_page()
-                # Attempt to use a common system font path for DejaVu for better Unicode support
-                # This path might not exist on all systems, especially minimal Docker images on Render
                 font_path_dejavu = "/usr/share/fonts/truetype/dejavu/DejaVuSans.ttf"
                 report_font = "Arial" # Fallback font
                 if os.path.exists(font_path_dejavu):
@@ -565,7 +564,7 @@ if download_report_button:
                 pdf.set_font(report_font, size=12)
                 pdf.cell(0, 10, txt="Groundwater Level Forecast Report", new_x="LMARGIN", new_y="NEXT", align="C"); pdf.ln(5)
 
-                plot_filename = "forecast_plot.png" # Temporary file in current dir
+                plot_filename = "forecast_plot.png"
                 try:
                     st.session_state.forecast_plot_fig.write_image(plot_filename, scale=2)
                     img_width_mm = 190 
@@ -602,13 +601,13 @@ if download_report_button:
                 pdf.ln(5)
 
                 pdf_output_bytes = pdf.output(dest="S").encode("latin-1")
-                b64_pdf = base64.b64encode(pdf_output_bytes).decode()
-                # Use st.download_button for direct download
+                # b64_pdf = base64.b64encode(pdf_output_bytes).decode() # Not needed for direct download
                 st.sidebar.download_button(
-                    label="Download PDF Report",
+                    label="Download PDF Report Now", # Changed label to be more direct
                     data=pdf_output_bytes,
                     file_name="groundwater_forecast_report.pdf",
-                    mime="application/octet-stream"
+                    mime="application/octet-stream",
+                    key="pdf_download_final_btn" # Added a unique key
                 )
                 st.success("PDF report ready. Click the download button in the sidebar.")
             except Exception as pdf_err:
@@ -616,3 +615,4 @@ if download_report_button:
                 import traceback; st.error(traceback.format_exc())
     else:
         st.error("Required data for PDF report is missing. Run a forecast and generate AI report first.")
+
