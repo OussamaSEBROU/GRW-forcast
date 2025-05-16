@@ -16,50 +16,67 @@ import base64
 import time
 import os
 
-# --- Custom CSS for Professional UI ---
+# --- Custom CSS for Professional UI with Dark/Light Mode Support ---
 def apply_custom_css():
     st.markdown("""
     <style>
-    /* Main app styling */
+    /* Main app styling - adapts to dark/light mode */
     .main .block-container {
-        padding-top: 2rem;
-        padding-bottom: 2rem;
+        padding-top: 1rem;
+        padding-bottom: 1rem;
     }
     
-    /* Header styling */
-    h1, h2, h3, h4 {
+    /* Header styling - adapts to dark/light mode */
+    h1 {
         font-weight: 600;
-        color: #1E3A8A;
+        font-size: 1.8rem;
     }
     
-    /* Button styling */
+    h2 {
+        font-weight: 600;
+        font-size: 1.5rem;
+    }
+    
+    h3, h4 {
+        font-weight: 500;
+    }
+    
+    /* Button styling - adapts to dark/light mode */
     .stButton > button {
-        background-color: #1E88E5;
-        color: white;
         border-radius: 4px;
-        border: none;
-        padding: 0.5rem 1rem;
         font-weight: 500;
         transition: all 0.3s;
+        padding: 0.5rem 1rem;
     }
+    
     .stButton > button:hover {
-        background-color: #0D47A1;
+        opacity: 0.8;
         box-shadow: 0 2px 5px rgba(0,0,0,0.2);
     }
     
-    /* Sidebar styling */
+    /* Sidebar styling - smaller fonts */
     .css-1d391kg, .css-12oz5g7 {
-        background-color: #F8F9FA;
         padding: 1rem;
+    }
+    
+    .sidebar .block-container {
+        font-size: 0.9rem;
+    }
+    
+    .sidebar h1 {
+        font-size: 1.4rem;
+    }
+    
+    .sidebar h2 {
+        font-size: 1.2rem;
     }
     
     /* Card-like containers */
     .card-container {
-        background-color: white;
         border-radius: 8px;
-        padding: 1.5rem;
-        box-shadow: 0 2px 10px rgba(0,0,0,0.05);
+        padding: 1.2rem;
         margin-bottom: 1rem;
+        box-shadow: 0 2px 5px rgba(0,0,0,0.05);
     }
     
     /* Chat message styling */
@@ -69,12 +86,12 @@ def apply_custom_css():
         margin-bottom: 0.5rem;
         position: relative;
     }
+    
     .user-message {
-        background-color: #E3F2FD;
         border-left: 4px solid #1E88E5;
     }
+    
     .ai-message {
-        background-color: #F5F5F5;
         border-left: 4px solid #78909C;
     }
     
@@ -82,17 +99,17 @@ def apply_custom_css():
     .chat-message:active {
         opacity: 0.7;
     }
+    
     .copy-tooltip {
         position: absolute;
         top: 0.5rem;
         right: 0.5rem;
-        background-color: rgba(0,0,0,0.7);
-        color: white;
         padding: 0.2rem 0.5rem;
         border-radius: 4px;
         font-size: 0.8rem;
         display: none;
     }
+    
     .chat-message:active .copy-tooltip {
         display: block;
     }
@@ -101,35 +118,45 @@ def apply_custom_css():
     .stTabs [data-baseweb="tab-list"] {
         gap: 2px;
     }
+    
     .stTabs [data-baseweb="tab"] {
         padding: 0.5rem 1rem;
         border-radius: 4px 4px 0 0;
-    }
-    .stTabs [aria-selected="true"] {
-        background-color: #E3F2FD;
-        color: #1E88E5;
-        font-weight: 500;
     }
     
     /* Metrics styling */
     [data-testid="stMetricValue"] {
         font-weight: 600;
-        color: #1E3A8A;
     }
     
-    /* About Us section */
-    .about-us {
-        background-color: #F8F9FA;
+    /* About Us section - collapsible */
+    .about-us-header {
+        cursor: pointer;
+        padding: 0.5rem;
+        border-radius: 4px;
+        margin-top: 1rem;
+        font-weight: 500;
+    }
+    
+    .about-us-content {
+        padding: 0.8rem;
+        border-radius: 4px;
+        margin-top: 0.5rem;
+        font-size: 0.9rem;
+    }
+    
+    /* App introduction */
+    .app-intro {
         padding: 1rem;
         border-radius: 8px;
-        margin-top: 2rem;
+        margin-bottom: 1.5rem;
         border-left: 4px solid #1E88E5;
     }
     </style>
     """, unsafe_allow_html=True)
 
-# --- JavaScript for Copy Functionality ---
-def add_copy_functionality():
+# --- JavaScript for Copy Functionality and Collapsible About Us ---
+def add_javascript_functionality():
     st.markdown("""
     <script>
     // Function to copy text to clipboard
@@ -145,6 +172,7 @@ def add_copy_functionality():
     // Add event listeners to chat messages
     document.addEventListener('DOMContentLoaded', function() {
         setTimeout(function() {
+            // Copy functionality for chat messages
             const chatMessages = document.querySelectorAll('.chat-message');
             chatMessages.forEach(function(message) {
                 message.addEventListener('touchstart', function() {
@@ -165,15 +193,31 @@ def add_copy_functionality():
                     clearTimeout(this.longPressTimer);
                 });
             });
+            
+            // Collapsible About Us section
+            const aboutUsHeader = document.querySelector('.about-us-header');
+            const aboutUsContent = document.querySelector('.about-us-content');
+            
+            if (aboutUsHeader && aboutUsContent) {
+                aboutUsContent.style.display = 'none';
+                
+                aboutUsHeader.addEventListener('click', function() {
+                    if (aboutUsContent.style.display === 'none') {
+                        aboutUsContent.style.display = 'block';
+                    } else {
+                        aboutUsContent.style.display = 'none';
+                    }
+                });
+            }
         }, 1000);
     });
     </script>
     """, unsafe_allow_html=True)
 
 # --- Page Configuration ---
-st.set_page_config(page_title="Groundwater Forecast App", layout="wide")
+st.set_page_config(page_title="DeepHydro AI Forecasting", layout="wide")
 apply_custom_css()
-add_copy_functionality()
+add_javascript_functionality()
 
 # --- Gemini API Configuration ---
 GEMINI_API_KEY = os.getenv("GOOGLE_API_KEY")
@@ -337,16 +381,7 @@ def create_forecast_plot(historical_df, forecast_df):
     fig.add_trace(go.Scatter(x=forecast_df["Date"], y=forecast_df["Forecast"], mode="lines", name="Forecast", line=dict(color="rgb(255, 127, 14)")))
     fig.add_trace(go.Scatter(x=forecast_df["Date"], y=forecast_df["Upper_CI"], mode="lines", name="Upper CI (95%)", line=dict(width=0), showlegend=False))
     fig.add_trace(go.Scatter(x=forecast_df["Date"], y=forecast_df["Lower_CI"], mode="lines", name="Lower CI (95%)", line=dict(width=0), fillcolor="rgba(255, 127, 14, 0.2)", fill="tonexty", showlegend=False))
-    fig.update_layout(
-        title="Groundwater Level: Historical Data & LSTM Forecast", 
-        xaxis_title="Date", 
-        yaxis_title="Groundwater Level", 
-        hovermode="x unified", 
-        legend=dict(yanchor="top", y=0.99, xanchor="left", x=0.01), 
-        template="plotly_white",
-        margin=dict(l=20, r=20, t=40, b=20),
-        height=500
-    )
+    fig.update_layout(title="Groundwater Level: Historical Data & LSTM Forecast", xaxis_title="Date", yaxis_title="Groundwater Level", hovermode="x unified", legend=dict(yanchor="top", y=0.99, xanchor="left", x=0.01), template="plotly_white")
     return fig
 
 def create_loss_plot(history_dict):
@@ -359,15 +394,7 @@ def create_loss_plot(history_dict):
     fig = go.Figure()
     fig.add_trace(go.Scatter(x=history_df["Epoch"], y=history_df["loss"], mode="lines", name="Training Loss"))
     fig.add_trace(go.Scatter(x=history_df["Epoch"], y=history_df["val_loss"], mode="lines", name="Validation Loss"))
-    fig.update_layout(
-        title="Model Training & Validation Loss Over Epochs", 
-        xaxis_title="Epoch", 
-        yaxis_title="Loss (MSE)", 
-        hovermode="x unified", 
-        template="plotly_white",
-        margin=dict(l=20, r=20, t=40, b=20),
-        height=400
-    )
+    fig.update_layout(title="Model Training & Validation Loss Over Epochs", xaxis_title="Epoch", yaxis_title="Loss (MSE)", hovermode="x unified", template="plotly_white")
     return fig
 
 # --- Gemini API Functions ---
@@ -524,19 +551,15 @@ if "chat_active" not in st.session_state: st.session_state.chat_active = False
 if "model_sequence_length" not in st.session_state: st.session_state.model_sequence_length = STANDARD_MODEL_SEQUENCE_LENGTH
 if "run_forecast_triggered" not in st.session_state: st.session_state.run_forecast_triggered = False
 if "active_tab" not in st.session_state: st.session_state.active_tab = 0
+if "about_us_expanded" not in st.session_state: st.session_state.about_us_expanded = False
 
 # --- Sidebar ---
 with st.sidebar:
-    st.markdown('<div class="card-container">', unsafe_allow_html=True)
-    st.title("Groundwater Forecast Control Panel")
-    st.markdown('</div>', unsafe_allow_html=True)
+    st.title("DeepHydro AI Forecasting")
     
-    st.markdown('<div class="card-container">', unsafe_allow_html=True)
     st.header("1. Upload Data")
     uploaded_data_file = st.file_uploader("Choose an XLSX data file", type="xlsx", key="data_uploader")
-    st.markdown('</div>', unsafe_allow_html=True)
 
-    st.markdown('<div class="card-container">', unsafe_allow_html=True)
     st.header("2. Model Selection & Configuration")
     model_choice = st.selectbox("Choose Model Type", ("Standard Pre-trained Model", "Train New Model", "Upload Custom .h5 Model"), key="model_select")
 
@@ -598,9 +621,7 @@ with st.sidebar:
         else:
             st.error("Please upload data first using the sidebar.")
             st.session_state.run_forecast_triggered = False
-    st.markdown('</div>', unsafe_allow_html=True)
 
-    st.markdown('<div class="card-container">', unsafe_allow_html=True)
     st.header("3. View & Export")
     
     if st.button("Generate AI Report", key="show_report_btn", disabled=not gemini_configured, use_container_width=True):
@@ -642,7 +663,7 @@ with st.sidebar:
                         st.warning(f"DejaVu font not found at {font_path_dejavu}, using Arial. For better PDF character support on Render, consider adding a .ttf font to your repo and referencing it, or installing fonts via a build script.")
                     
                     pdf.set_font(report_font, size=12)
-                    pdf.cell(0, 10, txt="Groundwater Level Forecast Report", new_x="LMARGIN", new_y="NEXT", align="C"); pdf.ln(5)
+                    pdf.cell(0, 10, txt="DeepHydro AI Forecasting Report", new_x="LMARGIN", new_y="NEXT", align="C"); pdf.ln(5)
 
                     plot_filename = "forecast_plot.png"
                     try:
@@ -685,7 +706,7 @@ with st.sidebar:
                     st.download_button(
                         label="Download PDF Report Now", # Changed label to be more direct
                         data=pdf_output_bytes,
-                        file_name="groundwater_forecast_report.pdf",
+                        file_name="deephydro_forecast_report.pdf",
                         mime="application/octet-stream",
                         key="pdf_download_final_btn", # Added a unique key
                         use_container_width=True
@@ -696,9 +717,7 @@ with st.sidebar:
                     import traceback; st.error(traceback.format_exc())
         else:
             st.error("Required data for PDF report is missing. Run a forecast and generate AI report first.")
-    st.markdown('</div>', unsafe_allow_html=True)
 
-    st.markdown('<div class="card-container">', unsafe_allow_html=True)
     st.header("4. AI Assistant")
     if st.button("Activate/Deactivate Chat", key="chat_ai_btn", disabled=not gemini_configured, use_container_width=True):
         st.session_state.chat_active = not st.session_state.chat_active
@@ -708,20 +727,35 @@ with st.sidebar:
             # Set active tab to chat tab when activating
             st.session_state.active_tab = 4  # Index of chat tab
         st.rerun()
-    st.markdown('</div>', unsafe_allow_html=True)
     
-    # About Us section in sidebar
-    st.markdown('<div class="about-us">', unsafe_allow_html=True)
-    st.markdown("### About Us")
-    st.markdown("We specialize in groundwater forecasting and hydrological modeling solutions.")
-    st.markdown("**Contact:** [groundwater@example.com](mailto:groundwater@example.com)")
-    st.markdown("© 2025 Groundwater Forecast Team")
+    # About Us section in sidebar - collapsible
+    st.markdown('<div class="about-us-header">👥 About Us</div>', unsafe_allow_html=True)
+    
+    # This div will be controlled by JavaScript to show/hide
+    st.markdown('<div class="about-us-content">', unsafe_allow_html=True)
+    st.markdown("We specialize in groundwater forecasting and hydrological modeling solutions using advanced AI techniques.")
+    st.markdown("**Contact:** [deephydro@example.com](mailto:deephydro@example.com)")
+    st.markdown("© 2025 DeepHydro AI Team")
     st.markdown('</div>', unsafe_allow_html=True)
 
 # --- Main Application Area ---
-st.markdown('<div class="card-container">', unsafe_allow_html=True)
-st.title("💧 Groundwater Level Time Series Forecasting")
-st.markdown("Upload data, select/train model, get forecasts with AI insights.")
+st.title("DeepHydro AI Forecasting")
+
+# App Introduction
+st.markdown('<div class="app-intro">', unsafe_allow_html=True)
+st.markdown("""
+### Welcome to DeepHydro AI Forecasting
+
+DeepHydro AI is an advanced groundwater forecasting platform that combines deep learning with hydrological expertise. Our LSTM-based models analyze historical groundwater data to provide accurate forecasts with uncertainty quantification.
+
+**Key Features:**
+- Time series forecasting with LSTM neural networks
+- Uncertainty quantification using Monte Carlo Dropout
+- AI-powered hydrological interpretation
+- Interactive visualization and reporting
+
+Upload your groundwater level data to begin exploring the future of your aquifer system.
+""")
 st.markdown('</div>', unsafe_allow_html=True)
 
 if uploaded_data_file is not None:
@@ -755,7 +789,6 @@ else:
 
 # Data Preview Tab
 with tabs[0]:
-    st.markdown('<div class="card-container">', unsafe_allow_html=True)
     st.header("Uploaded & Cleaned Data Preview")
     if st.session_state.cleaned_data is not None:
         st.dataframe(st.session_state.cleaned_data)
@@ -780,11 +813,9 @@ with tabs[0]:
         st.plotly_chart(fig_data, use_container_width=True)
     else:
         st.info("⬆️ Please upload an XLSX data file using the sidebar to begin.")
-    st.markdown('</div>', unsafe_allow_html=True)
 
 # Forecast Results Tab
 with tabs[1]:
-    st.markdown('<div class="card-container">', unsafe_allow_html=True)
     st.header("Forecast Results")
     if st.session_state.forecast_results is not None and isinstance(st.session_state.forecast_results, pd.DataFrame) and not st.session_state.forecast_results.empty:
         if st.session_state.forecast_plot_fig is not None:
@@ -798,11 +829,9 @@ with tabs[1]:
         st.warning("Forecast process was run, but no results are available. Check errors.")
     else: 
         st.info("Run a forecast using the sidebar to see results here.")
-    st.markdown('</div>', unsafe_allow_html=True)
 
 # Model Evaluation Tab
 with tabs[2]:
-    st.markdown('<div class="card-container">', unsafe_allow_html=True)
     st.header("Model Evaluation")
     if st.session_state.evaluation_metrics is not None and isinstance(st.session_state.evaluation_metrics, dict):
         st.subheader("Performance Metrics (on validation or pseudo-validation set)")
@@ -824,11 +853,9 @@ with tabs[2]:
         st.warning("Forecast process was run, but no evaluation metrics are available. Check errors.")
     else: 
         st.info("Run a forecast to see model evaluation metrics here.")
-    st.markdown('</div>', unsafe_allow_html=True)
 
 # AI Report Tab
 with tabs[3]:
-    st.markdown('<div class="card-container">', unsafe_allow_html=True)
     st.header("AI-Generated Scientific Report")
     if not gemini_configured: 
         st.warning("AI features disabled. Configure Gemini API Key.")
@@ -836,11 +863,9 @@ with tabs[3]:
         st.markdown(f'<div class="chat-message ai-message">{st.session_state.ai_report}<div class="copy-tooltip">Copied!</div></div>', unsafe_allow_html=True)
     else: 
         st.info("Click \"Generate AI Report\" in the sidebar after a successful forecast.")
-    st.markdown('</div>', unsafe_allow_html=True)
 
 # AI Chatbot Tab
 with tabs[4]:
-    st.markdown('<div class="card-container">', unsafe_allow_html=True)
     st.header("AI Chatbot Assistant")
     if not gemini_configured: 
         st.warning("AI features disabled. Configure Gemini API Key.")
@@ -872,4 +897,3 @@ with tabs[4]:
             st.rerun()
     else:
         st.info("Click \"Activate/Deactivate Chat\" in sidebar (requires forecast results)." if gemini_configured else "AI Chat disabled.")
-    st.markdown('</div>', unsafe_allow_html=True)
