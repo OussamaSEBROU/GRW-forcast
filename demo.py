@@ -22,7 +22,8 @@ st.set_page_config(page_title="Groundwater Forecast App", layout="wide")
 
 #--- Gemini API Configuration ---
 
-GEMINI_API_KEY = os.getenv("GOOGLE_API_KEY") gemini_configured = False
+GEMINI_API_KEY = os.getenv("GOOGLE_API_KEY") 
+gemini_configured = False
 
 if GEMINI_API_KEY and GEMINI_API_KEY != "Gemini_api_key": try: # Configure Gemini with the API key genai.configure(api_key=GEMINI_API_KEY)
 
