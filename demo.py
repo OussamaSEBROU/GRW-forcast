@@ -16,11 +16,11 @@ import base64
 import time
 import os
 
---- Page Configuration ---
+#--- Page Configuration ---
 
 st.set_page_config(page_title="Groundwater Forecast App", layout="wide")
 
---- Gemini API Configuration ---
+#--- Gemini API Configuration ---
 
 GEMINI_API_KEY = os.getenv("GOOGLE_API_KEY") gemini_configured = False
 
