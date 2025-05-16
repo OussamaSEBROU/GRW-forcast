@@ -57,12 +57,10 @@ else:
 
 
 # --- Model Paths & Constants ---
-# Ensure this path is relative to the app.py file for deployment
-STANDARD_MODEL_DIR = "standard_model.h5"
-STANDARD_MODEL_FILENAME = "standard_model.h5"
-STANDARD_MODEL_PATH = os.path.join(STANDARD_MODEL_DIR, STANDARD_MODEL_FILENAME)
+# Model is directly in the root directory based on the screenshot
+STANDARD_MODEL_PATH = "standard_model.h5"  # Direct path to the file in root directory
 
-STANDARD_MODEL_SEQUENCE_LENGTH = 60 # Default, will be updated if model loads
+STANDARD_MODEL_SEQUENCE_LENGTH = 60  # Default, will be updated if model loads
 if os.path.exists(STANDARD_MODEL_PATH):
     try:
         # Load model without compiling to avoid issues with custom/missing metrics like 'mse' string
@@ -73,7 +71,8 @@ if os.path.exists(STANDARD_MODEL_PATH):
     except Exception as e:
         st.warning(f"Could not load standard model from {STANDARD_MODEL_PATH} to infer sequence length: {e}. Using default {STANDARD_MODEL_SEQUENCE_LENGTH}.")
 else:
-    st.warning(f"Standard model file not found at relative path: {STANDARD_MODEL_PATH}. Please ensure it exists in the {STANDARD_MODEL_DIR} directory next to app.py.")
+    st.warning(f"Standard model file not found at path: {STANDARD_MODEL_PATH}. Please ensure it exists in the root directory next to demo.py.")
+
 
 # --- Helper Functions ---
 @st.cache_data
