@@ -16,11 +16,166 @@ import base64
 import time
 import os
 
+# --- Custom CSS for Professional UI ---
+def apply_custom_css():
+    st.markdown("""
+    <style>
+    /* Main app styling */
+    .main .block-container {
+        padding-top: 2rem;
+        padding-bottom: 2rem;
+    }
+    
+    /* Header styling */
+    h1, h2, h3, h4 {
+        font-weight: 600;
+        color: #1E3A8A;
+    }
+    
+    /* Button styling */
+    .stButton > button {
+        background-color: #1E88E5;
+        color: white;
+        border-radius: 4px;
+        border: none;
+        padding: 0.5rem 1rem;
+        font-weight: 500;
+        transition: all 0.3s;
+    }
+    .stButton > button:hover {
+        background-color: #0D47A1;
+        box-shadow: 0 2px 5px rgba(0,0,0,0.2);
+    }
+    
+    /* Sidebar styling */
+    .css-1d391kg, .css-12oz5g7 {
+        background-color: #F8F9FA;
+        padding: 1rem;
+    }
+    
+    /* Card-like containers */
+    .card-container {
+        background-color: white;
+        border-radius: 8px;
+        padding: 1.5rem;
+        box-shadow: 0 2px 10px rgba(0,0,0,0.05);
+        margin-bottom: 1rem;
+    }
+    
+    /* Chat message styling */
+    .chat-message {
+        padding: 1rem;
+        border-radius: 8px;
+        margin-bottom: 0.5rem;
+        position: relative;
+    }
+    .user-message {
+        background-color: #E3F2FD;
+        border-left: 4px solid #1E88E5;
+    }
+    .ai-message {
+        background-color: #F5F5F5;
+        border-left: 4px solid #78909C;
+    }
+    
+    /* Copy functionality for chat messages */
+    .chat-message:active {
+        opacity: 0.7;
+    }
+    .copy-tooltip {
+        position: absolute;
+        top: 0.5rem;
+        right: 0.5rem;
+        background-color: rgba(0,0,0,0.7);
+        color: white;
+        padding: 0.2rem 0.5rem;
+        border-radius: 4px;
+        font-size: 0.8rem;
+        display: none;
+    }
+    .chat-message:active .copy-tooltip {
+        display: block;
+    }
+    
+    /* Tab styling */
+    .stTabs [data-baseweb="tab-list"] {
+        gap: 2px;
+    }
+    .stTabs [data-baseweb="tab"] {
+        padding: 0.5rem 1rem;
+        border-radius: 4px 4px 0 0;
+    }
+    .stTabs [aria-selected="true"] {
+        background-color: #E3F2FD;
+        color: #1E88E5;
+        font-weight: 500;
+    }
+    
+    /* Metrics styling */
+    [data-testid="stMetricValue"] {
+        font-weight: 600;
+        color: #1E3A8A;
+    }
+    
+    /* About Us section */
+    .about-us {
+        background-color: #F8F9FA;
+        padding: 1rem;
+        border-radius: 8px;
+        margin-top: 2rem;
+        border-left: 4px solid #1E88E5;
+    }
+    </style>
+    """, unsafe_allow_html=True)
+
+# --- JavaScript for Copy Functionality ---
+def add_copy_functionality():
+    st.markdown("""
+    <script>
+    // Function to copy text to clipboard
+    function copyToClipboard(text) {
+        const textarea = document.createElement('textarea');
+        textarea.value = text;
+        document.body.appendChild(textarea);
+        textarea.select();
+        document.execCommand('copy');
+        document.body.removeChild(textarea);
+    }
+    
+    // Add event listeners to chat messages
+    document.addEventListener('DOMContentLoaded', function() {
+        setTimeout(function() {
+            const chatMessages = document.querySelectorAll('.chat-message');
+            chatMessages.forEach(function(message) {
+                message.addEventListener('touchstart', function() {
+                    this.longPressTimer = setTimeout(() => {
+                        const text = this.innerText;
+                        copyToClipboard(text);
+                        const tooltip = this.querySelector('.copy-tooltip');
+                        if (tooltip) {
+                            tooltip.style.display = 'block';
+                            setTimeout(() => {
+                                tooltip.style.display = 'none';
+                            }, 1000);
+                        }
+                    }, 500);
+                });
+                
+                message.addEventListener('touchend', function() {
+                    clearTimeout(this.longPressTimer);
+                });
+            });
+        }, 1000);
+    });
+    </script>
+    """, unsafe_allow_html=True)
+
 # --- Page Configuration ---
 st.set_page_config(page_title="Groundwater Forecast App", layout="wide")
+apply_custom_css()
+add_copy_functionality()
 
 # --- Gemini API Configuration ---
-
 GEMINI_API_KEY = os.getenv("GOOGLE_API_KEY")
 gemini_configured = False
 
@@ -54,8 +209,6 @@ if GEMINI_API_KEY and GEMINI_API_KEY != "Gemini_api_key":
 else:
     st.warning("Gemini API Key not found or is placeholder. AI features will be disabled. Set GEMINI_API_KEY environment variable or update in code.")
 
-
-
 # --- Model Paths & Constants ---
 # Model is directly in the root directory based on the screenshot
 STANDARD_MODEL_PATH = "standard_model.h5"  # Direct path to the file in root directory
@@ -72,7 +225,6 @@ if os.path.exists(STANDARD_MODEL_PATH):
         st.warning(f"Could not load standard model from {STANDARD_MODEL_PATH} to infer sequence length: {e}. Using default {STANDARD_MODEL_SEQUENCE_LENGTH}.")
 else:
     st.warning(f"Standard model file not found at path: {STANDARD_MODEL_PATH}. Please ensure it exists in the root directory next to demo.py.")
-
 
 # --- Helper Functions ---
 @st.cache_data
@@ -185,7 +337,16 @@ def create_forecast_plot(historical_df, forecast_df):
     fig.add_trace(go.Scatter(x=forecast_df["Date"], y=forecast_df["Forecast"], mode="lines", name="Forecast", line=dict(color="rgb(255, 127, 14)")))
     fig.add_trace(go.Scatter(x=forecast_df["Date"], y=forecast_df["Upper_CI"], mode="lines", name="Upper CI (95%)", line=dict(width=0), showlegend=False))
     fig.add_trace(go.Scatter(x=forecast_df["Date"], y=forecast_df["Lower_CI"], mode="lines", name="Lower CI (95%)", line=dict(width=0), fillcolor="rgba(255, 127, 14, 0.2)", fill="tonexty", showlegend=False))
-    fig.update_layout(title="Groundwater Level: Historical Data & LSTM Forecast", xaxis_title="Date", yaxis_title="Groundwater Level", hovermode="x unified", legend=dict(yanchor="top", y=0.99, xanchor="left", x=0.01), template="plotly_white")
+    fig.update_layout(
+        title="Groundwater Level: Historical Data & LSTM Forecast", 
+        xaxis_title="Date", 
+        yaxis_title="Groundwater Level", 
+        hovermode="x unified", 
+        legend=dict(yanchor="top", y=0.99, xanchor="left", x=0.01), 
+        template="plotly_white",
+        margin=dict(l=20, r=20, t=40, b=20),
+        height=500
+    )
     return fig
 
 def create_loss_plot(history_dict):
@@ -198,7 +359,15 @@ def create_loss_plot(history_dict):
     fig = go.Figure()
     fig.add_trace(go.Scatter(x=history_df["Epoch"], y=history_df["loss"], mode="lines", name="Training Loss"))
     fig.add_trace(go.Scatter(x=history_df["Epoch"], y=history_df["val_loss"], mode="lines", name="Validation Loss"))
-    fig.update_layout(title="Model Training & Validation Loss Over Epochs", xaxis_title="Epoch", yaxis_title="Loss (MSE)", hovermode="x unified", template="plotly_white")
+    fig.update_layout(
+        title="Model Training & Validation Loss Over Epochs", 
+        xaxis_title="Epoch", 
+        yaxis_title="Loss (MSE)", 
+        hovermode="x unified", 
+        template="plotly_white",
+        margin=dict(l=20, r=20, t=40, b=20),
+        height=400
+    )
     return fig
 
 # --- Gemini API Functions ---
@@ -347,93 +516,213 @@ def run_forecast_pipeline(df, model_choice, forecast_horizon, custom_model_file_
 
 # --- Initialize Session State ---
 for key in ["cleaned_data", "forecast_results", "evaluation_metrics", "training_history", 
-            "ai_report", "scaler_object", "forecast_plot_fig", "uploaded_data_filename"]:
+            "ai_report", "scaler_object", "forecast_plot_fig", "uploaded_data_filename",
+            "active_tab"]:
     if key not in st.session_state: st.session_state[key] = None
 if "chat_history" not in st.session_state: st.session_state.chat_history = []
 if "chat_active" not in st.session_state: st.session_state.chat_active = False
 if "model_sequence_length" not in st.session_state: st.session_state.model_sequence_length = STANDARD_MODEL_SEQUENCE_LENGTH
 if "run_forecast_triggered" not in st.session_state: st.session_state.run_forecast_triggered = False
+if "active_tab" not in st.session_state: st.session_state.active_tab = 0
 
 # --- Sidebar ---
-st.sidebar.title("Groundwater Forecast Control Panel")
-st.sidebar.header("1. Upload Data")
-uploaded_data_file = st.sidebar.file_uploader("Choose an XLSX data file", type="xlsx", key="data_uploader")
+with st.sidebar:
+    st.markdown('<div class="card-container">', unsafe_allow_html=True)
+    st.title("Groundwater Forecast Control Panel")
+    st.markdown('</div>', unsafe_allow_html=True)
+    
+    st.markdown('<div class="card-container">', unsafe_allow_html=True)
+    st.header("1. Upload Data")
+    uploaded_data_file = st.file_uploader("Choose an XLSX data file", type="xlsx", key="data_uploader")
+    st.markdown('</div>', unsafe_allow_html=True)
 
-st.sidebar.header("2. Model Selection & Configuration")
-model_choice = st.sidebar.selectbox("Choose Model Type", ("Standard Pre-trained Model", "Train New Model", "Upload Custom .h5 Model"), key="model_select")
+    st.markdown('<div class="card-container">', unsafe_allow_html=True)
+    st.header("2. Model Selection & Configuration")
+    model_choice = st.selectbox("Choose Model Type", ("Standard Pre-trained Model", "Train New Model", "Upload Custom .h5 Model"), key="model_select")
 
-custom_model_file_obj_sidebar = None
-custom_scaler_min_sidebar, custom_scaler_max_sidebar = None, None
-use_custom_scaler_sidebar = False
-sequence_length_train_sidebar = st.session_state.model_sequence_length # Initialize with current session or default
-epochs_train_sidebar = 50
+    custom_model_file_obj_sidebar = None
+    custom_scaler_min_sidebar, custom_scaler_max_sidebar = None, None
+    use_custom_scaler_sidebar = False
+    sequence_length_train_sidebar = st.session_state.model_sequence_length # Initialize with current session or default
+    epochs_train_sidebar = 50
 
-if model_choice == "Upload Custom .h5 Model":
-    custom_model_file_obj_sidebar = st.sidebar.file_uploader("Upload your .h5 model", type="h5", key="custom_h5_uploader")
-    use_custom_scaler_sidebar = st.sidebar.checkbox("Provide custom scaler parameters for uploaded model?", value=False, key="use_custom_scaler_cb")
-    if use_custom_scaler_sidebar:
-        st.sidebar.markdown("Enter the **original min/max values** your custom model was scaled with (before 0-1 normalization).")
-        custom_scaler_min_sidebar = st.sidebar.number_input("Original Data Min Value", value=0.0, format="%.4f", key="custom_scaler_min_in")
-        custom_scaler_max_sidebar = st.sidebar.number_input("Original Data Max Value", value=1.0, format="%.4f", key="custom_scaler_max_in")
-elif model_choice == "Standard Pre-trained Model":
-    st.sidebar.info(f"Using standard model. Default sequence length: {st.session_state.model_sequence_length}")
-    use_custom_scaler_sidebar = st.sidebar.checkbox("Provide custom scaler parameters for standard model?", value=False, key="use_std_scaler_cb")
-    if use_custom_scaler_sidebar:
-        st.sidebar.markdown("Enter the **original min/max values** the standard model was scaled with (if known).")
-        custom_scaler_min_sidebar = st.sidebar.number_input("Original Data Min Value (Standard Model)", value=0.0, format="%.4f", key="std_scaler_min_in")
-        custom_scaler_max_sidebar = st.sidebar.number_input("Original Data Max Value (Standard Model)", value=1.0, format="%.4f", key="std_scaler_max_in")
-elif model_choice == "Train New Model":
-    sequence_length_train_sidebar = st.sidebar.number_input("LSTM Sequence Length (for training)", min_value=10, max_value=365, value=st.session_state.model_sequence_length, step=10, key="seq_len_train_in")
-    epochs_train_sidebar = st.sidebar.number_input("Training Epochs", min_value=10, max_value=500, value=50, step=10, key="epochs_train_in")
+    if model_choice == "Upload Custom .h5 Model":
+        custom_model_file_obj_sidebar = st.file_uploader("Upload your .h5 model", type="h5", key="custom_h5_uploader")
+        use_custom_scaler_sidebar = st.checkbox("Provide custom scaler parameters for uploaded model?", value=False, key="use_custom_scaler_cb")
+        if use_custom_scaler_sidebar:
+            st.markdown("Enter the **original min/max values** your custom model was scaled with (before 0-1 normalization).")
+            custom_scaler_min_sidebar = st.number_input("Original Data Min Value", value=0.0, format="%.4f", key="custom_scaler_min_in")
+            custom_scaler_max_sidebar = st.number_input("Original Data Max Value", value=1.0, format="%.4f", key="custom_scaler_max_in")
+    elif model_choice == "Standard Pre-trained Model":
+        st.info(f"Using standard model. Default sequence length: {st.session_state.model_sequence_length}")
+        use_custom_scaler_sidebar = st.checkbox("Provide custom scaler parameters for standard model?", value=False, key="use_std_scaler_cb")
+        if use_custom_scaler_sidebar:
+            st.markdown("Enter the **original min/max values** the standard model was scaled with (if known).")
+            custom_scaler_min_sidebar = st.number_input("Original Data Min Value (Standard Model)", value=0.0, format="%.4f", key="std_scaler_min_in")
+            custom_scaler_max_sidebar = st.number_input("Original Data Max Value (Standard Model)", value=1.0, format="%.4f", key="std_scaler_max_in")
+    elif model_choice == "Train New Model":
+        sequence_length_train_sidebar = st.number_input("LSTM Sequence Length (for training)", min_value=10, max_value=365, value=st.session_state.model_sequence_length, step=10, key="seq_len_train_in")
+        epochs_train_sidebar = st.number_input("Training Epochs", min_value=10, max_value=500, value=50, step=10, key="epochs_train_in")
 
-mc_iterations_sidebar = st.sidebar.number_input("MC Dropout Iterations (for C.I.)", min_value=10, max_value=500, value=100, step=10, key="mc_iter_in")
-forecast_horizon_sidebar = st.sidebar.number_input("Forecast Horizon (steps)", min_value=1, max_value=100, value=12, step=1, key="horizon_in")
+    mc_iterations_sidebar = st.number_input("MC Dropout Iterations (for C.I.)", min_value=10, max_value=500, value=100, step=10, key="mc_iter_in")
+    forecast_horizon_sidebar = st.number_input("Forecast Horizon (steps)", min_value=1, max_value=100, value=12, step=1, key="horizon_in")
 
-if st.sidebar.button("Run Forecast", key="run_forecast_main_btn"):
-    st.session_state.run_forecast_triggered = True
-    if st.session_state.cleaned_data is not None:
-        if model_choice == "Upload Custom .h5 Model" and custom_model_file_obj_sidebar is None:
-            st.error("Please upload a custom .h5 model file if that option is selected.")
-            st.session_state.run_forecast_triggered = False
-        else:
-            with st.spinner(f"Running forecast with {model_choice}. This may take a few moments..."):
-                forecast_df, metrics, history, scaler_obj = run_forecast_pipeline(
-                    st.session_state.cleaned_data, model_choice, forecast_horizon_sidebar, 
-                    custom_model_file_obj_sidebar, sequence_length_train_sidebar, epochs_train_sidebar, 
-                    mc_iterations_sidebar, use_custom_scaler_sidebar, custom_scaler_min_sidebar, custom_scaler_max_sidebar
-                )
-            st.session_state.forecast_results = forecast_df
-            st.session_state.evaluation_metrics = metrics
-            st.session_state.training_history = history
-            st.session_state.scaler_object = scaler_obj
-            if forecast_df is not None and metrics is not None:
-                st.session_state.forecast_plot_fig = create_forecast_plot(st.session_state.cleaned_data, forecast_df)
-                st.success("Forecast complete! Results are available in the tabs.")
-                st.session_state.ai_report = None; st.session_state.chat_history = []; st.session_state.chat_active = False
+    if st.button("Run Forecast", key="run_forecast_main_btn", use_container_width=True):
+        st.session_state.run_forecast_triggered = True
+        if st.session_state.cleaned_data is not None:
+            if model_choice == "Upload Custom .h5 Model" and custom_model_file_obj_sidebar is None:
+                st.error("Please upload a custom .h5 model file if that option is selected.")
+                st.session_state.run_forecast_triggered = False
             else:
-                st.error("Forecast pipeline did not complete successfully. Check messages above.")
-                st.session_state.forecast_results = None; st.session_state.evaluation_metrics = None
-                st.session_state.training_history = None; st.session_state.forecast_plot_fig = None
+                with st.spinner(f"Running forecast with {model_choice}. This may take a few moments..."):
+                    forecast_df, metrics, history, scaler_obj = run_forecast_pipeline(
+                        st.session_state.cleaned_data, model_choice, forecast_horizon_sidebar, 
+                        custom_model_file_obj_sidebar, sequence_length_train_sidebar, epochs_train_sidebar, 
+                        mc_iterations_sidebar, use_custom_scaler_sidebar, custom_scaler_min_sidebar, custom_scaler_max_sidebar
+                    )
+                st.session_state.forecast_results = forecast_df
+                st.session_state.evaluation_metrics = metrics
+                st.session_state.training_history = history
+                st.session_state.scaler_object = scaler_obj
+                if forecast_df is not None and metrics is not None:
+                    st.session_state.forecast_plot_fig = create_forecast_plot(st.session_state.cleaned_data, forecast_df)
+                    st.success("Forecast complete! Results are available in the tabs.")
+                    st.session_state.ai_report = None; st.session_state.chat_history = []; st.session_state.chat_active = False
+                    # Set active tab to forecast results
+                    st.session_state.active_tab = 1  # Index of forecast tab
+                else:
+                    st.error("Forecast pipeline did not complete successfully. Check messages above.")
+                    st.session_state.forecast_results = None; st.session_state.evaluation_metrics = None
+                    st.session_state.training_history = None; st.session_state.forecast_plot_fig = None
+                st.rerun()
+        else:
+            st.error("Please upload data first using the sidebar.")
+            st.session_state.run_forecast_triggered = False
+    st.markdown('</div>', unsafe_allow_html=True)
+
+    st.markdown('<div class="card-container">', unsafe_allow_html=True)
+    st.header("3. View & Export")
+    
+    if st.button("Generate AI Report", key="show_report_btn", disabled=not gemini_configured, use_container_width=True):
+        if not gemini_configured: 
+            st.error("AI Report disabled. Configure Gemini API Key.")
+        elif st.session_state.cleaned_data is not None and st.session_state.forecast_results is not None and st.session_state.evaluation_metrics is not None:
+            with st.spinner(f"Generating AI report ({report_language})..."):
+                st.session_state.ai_report = generate_gemini_report(
+                    st.session_state.cleaned_data, st.session_state.forecast_results,
+                    st.session_state.evaluation_metrics, report_language
+                )
+            if st.session_state.ai_report and not st.session_state.ai_report.startswith("Error:"):
+                st.success("AI report generated.")
+                # Set active tab to AI report
+                st.session_state.active_tab = 3  # Index of AI report tab
+            else: 
+                st.error(f"Failed to generate AI report. {st.session_state.ai_report}")
             st.rerun()
-    else:
-        st.error("Please upload data first using the sidebar.")
-        st.session_state.run_forecast_triggered = False
+        else: 
+            st.error("Cleaned data, forecast results, and evaluation metrics must be available. Run a successful forecast first.")
+    
+    report_language = st.selectbox("Report Language", ["English", "French"], key="report_lang_select", disabled=not gemini_configured)
+    
+    if st.button("Download Report (PDF)", key="download_report_btn", use_container_width=True):
+        if st.session_state.forecast_results is not None and st.session_state.evaluation_metrics is not None and st.session_state.ai_report is not None and st.session_state.forecast_plot_fig is not None:
+            with st.spinner("Generating PDF report..."):
+                try:
+                    pdf = FPDF()
+                    pdf.add_page()
+                    font_path_dejavu = "/usr/share/fonts/truetype/dejavu/DejaVuSans.ttf"
+                    report_font = "Arial" # Fallback font
+                    if os.path.exists(font_path_dejavu):
+                        try: 
+                            pdf.add_font("DejaVu", fname=font_path_dejavu, uni=True)
+                            report_font = "DejaVu"
+                        except RuntimeError as font_err:
+                            st.warning(f"Failed to add DejaVu font ({font_err}), using Arial.")
+                    else: 
+                        st.warning(f"DejaVu font not found at {font_path_dejavu}, using Arial. For better PDF character support on Render, consider adding a .ttf font to your repo and referencing it, or installing fonts via a build script.")
+                    
+                    pdf.set_font(report_font, size=12)
+                    pdf.cell(0, 10, txt="Groundwater Level Forecast Report", new_x="LMARGIN", new_y="NEXT", align="C"); pdf.ln(5)
 
-st.sidebar.header("3. View & Export")
-show_report_button = st.sidebar.button("Generate AI Report", key="show_report_btn", disabled=not gemini_configured)
-report_language = st.sidebar.selectbox("Report Language", ["English", "French"], key="report_lang_select", disabled=not gemini_configured)
-download_report_button = st.sidebar.button("Download Report (PDF)", key="download_report_btn")
+                    plot_filename = "forecast_plot.png"
+                    try:
+                        st.session_state.forecast_plot_fig.write_image(plot_filename, scale=2)
+                        img_width_mm = 190 
+                        pdf.image(plot_filename, x=pdf.get_x(), y=pdf.get_y(), w=img_width_mm)
+                        pdf.ln(125) # Adjust based on typical plot height
+                    except Exception as img_err: 
+                        st.warning(f"Could not save/embed plot image: {img_err}. Plot omitted from PDF.")
+                    finally:
+                        if os.path.exists(plot_filename): os.remove(plot_filename)
 
-st.sidebar.header("4. AI Assistant")
-chat_with_ai_button = st.sidebar.button("Activate/Deactivate Chat", key="chat_ai_btn", disabled=not gemini_configured)
-if chat_with_ai_button:
-    st.session_state.chat_active = not st.session_state.chat_active
-    if not st.session_state.chat_active: st.session_state.chat_history = []
-    st.rerun()
+                    pdf.set_font(report_font, "B", size=11); pdf.cell(0, 10, txt="Model Evaluation Metrics", new_x="LMARGIN", new_y="NEXT"); pdf.ln(1)
+                    pdf.set_font(report_font, size=10)
+                    for key, value in st.session_state.evaluation_metrics.items():
+                        val_str = f"{value:.4f}" if isinstance(value, (float, np.floating)) and not np.isnan(value) else str(value)
+                        pdf.cell(0, 8, txt=f"{key}: {val_str}", new_x="LMARGIN", new_y="NEXT")
+                    pdf.ln(5)
+
+                    pdf.set_font(report_font, "B", size=11); pdf.cell(0, 10, txt="Forecast Data (First 10 points)", new_x="LMARGIN", new_y="NEXT"); pdf.ln(1)
+                    pdf.set_font(report_font, size=8); col_widths = [35, 35, 35, 35]
+                    pdf.cell(col_widths[0], 7, txt="Date", border=1)
+                    pdf.cell(col_widths[1], 7, txt="Forecast", border=1)
+                    pdf.cell(col_widths[2], 7, txt="Lower CI", border=1)
+                    pdf.cell(col_widths[3], 7, txt="Upper CI", border=1, new_x="LMARGIN", new_y="NEXT")
+                    for _, row in st.session_state.forecast_results.head(10).iterrows():
+                        pdf.cell(col_widths[0], 6, txt=str(row["Date"].date()), border=1)
+                        pdf.cell(col_widths[1], 6, txt=f"{row['Forecast']:.2f}", border=1)
+                        pdf.cell(col_widths[2], 6, txt=f"{row['Lower_CI']:.2f}", border=1)
+                        pdf.cell(col_widths[3], 6, txt=f"{row['Upper_CI']:.2f}", border=1, new_x="LMARGIN", new_y="NEXT")
+                    pdf.ln(5)
+
+                    pdf.set_font(report_font, "B", size=11); pdf.cell(0, 10, txt=f"AI-Generated Report ({report_language})", new_x="LMARGIN", new_y="NEXT"); pdf.ln(1)
+                    pdf.set_font(report_font, size=10)
+                    pdf.multi_cell(0, 5, txt=st.session_state.ai_report)
+                    pdf.ln(5)
+
+                    pdf_output_bytes = pdf.output(dest="S").encode("latin-1")
+                    # b64_pdf = base64.b64encode(pdf_output_bytes).decode() # Not needed for direct download
+                    st.download_button(
+                        label="Download PDF Report Now", # Changed label to be more direct
+                        data=pdf_output_bytes,
+                        file_name="groundwater_forecast_report.pdf",
+                        mime="application/octet-stream",
+                        key="pdf_download_final_btn", # Added a unique key
+                        use_container_width=True
+                    )
+                    st.success("PDF report ready. Click the download button above.")
+                except Exception as pdf_err:
+                    st.error(f"Failed to generate PDF report: {pdf_err}")
+                    import traceback; st.error(traceback.format_exc())
+        else:
+            st.error("Required data for PDF report is missing. Run a forecast and generate AI report first.")
+    st.markdown('</div>', unsafe_allow_html=True)
+
+    st.markdown('<div class="card-container">', unsafe_allow_html=True)
+    st.header("4. AI Assistant")
+    if st.button("Activate/Deactivate Chat", key="chat_ai_btn", disabled=not gemini_configured, use_container_width=True):
+        st.session_state.chat_active = not st.session_state.chat_active
+        if not st.session_state.chat_active: 
+            st.session_state.chat_history = []
+        else:
+            # Set active tab to chat tab when activating
+            st.session_state.active_tab = 4  # Index of chat tab
+        st.rerun()
+    st.markdown('</div>', unsafe_allow_html=True)
+    
+    # About Us section in sidebar
+    st.markdown('<div class="about-us">', unsafe_allow_html=True)
+    st.markdown("### About Us")
+    st.markdown("We specialize in groundwater forecasting and hydrological modeling solutions.")
+    st.markdown("**Contact:** [groundwater@example.com](mailto:groundwater@example.com)")
+    st.markdown("© 2025 Groundwater Forecast Team")
+    st.markdown('</div>', unsafe_allow_html=True)
 
 # --- Main Application Area ---
+st.markdown('<div class="card-container">', unsafe_allow_html=True)
 st.title("💧 Groundwater Level Time Series Forecasting")
 st.markdown("Upload data, select/train model, get forecasts with AI insights.")
+st.markdown('</div>', unsafe_allow_html=True)
 
 if uploaded_data_file is not None:
     if st.session_state.get("uploaded_data_filename") != uploaded_data_file.name:
@@ -453,35 +742,67 @@ if uploaded_data_file is not None:
             st.session_state.cleaned_data = None
             st.error("Data loading failed. Please check the file format and content.")
 
-data_tab, forecast_tab, evaluation_tab, ai_report_tab, chat_tab = st.tabs([
+# Create tabs with the active tab set from session state
+tabs = st.tabs([
     "Data Preview", "Forecast Results", "Model Evaluation", "AI Report", "AI Chatbot"
 ])
 
-with data_tab:
+# Set the active tab based on session state
+if st.session_state.active_tab is not None:
+    active_tab_index = st.session_state.active_tab
+else:
+    active_tab_index = 0
+
+# Data Preview Tab
+with tabs[0]:
+    st.markdown('<div class="card-container">', unsafe_allow_html=True)
     st.header("Uploaded & Cleaned Data Preview")
     if st.session_state.cleaned_data is not None:
         st.dataframe(st.session_state.cleaned_data)
         st.write(f"Shape: {st.session_state.cleaned_data.shape}")
-        st.metric("Time Range", f"{st.session_state.cleaned_data['Date'].min():%Y-%m-%d} to {st.session_state.cleaned_data['Date'].max():%Y-%m-%d}")
-        st.metric("Data Points", len(st.session_state.cleaned_data))
+        
+        col1, col2 = st.columns(2)
+        with col1:
+            st.metric("Time Range", f"{st.session_state.cleaned_data['Date'].min():%Y-%m-%d} to {st.session_state.cleaned_data['Date'].max():%Y-%m-%d}")
+        with col2:
+            st.metric("Data Points", len(st.session_state.cleaned_data))
+            
         fig_data = go.Figure()
         fig_data.add_trace(go.Scatter(x=st.session_state.cleaned_data["Date"], y=st.session_state.cleaned_data["Level"], mode="lines", name="Level"))
-        fig_data.update_layout(title="Historical Groundwater Levels", xaxis_title="Date", yaxis_title="Level", template="plotly_white")
+        fig_data.update_layout(
+            title="Historical Groundwater Levels", 
+            xaxis_title="Date", 
+            yaxis_title="Level", 
+            template="plotly_white",
+            margin=dict(l=20, r=20, t=40, b=20),
+            height=400
+        )
         st.plotly_chart(fig_data, use_container_width=True)
     else:
         st.info("⬆️ Please upload an XLSX data file using the sidebar to begin.")
+    st.markdown('</div>', unsafe_allow_html=True)
 
-with forecast_tab:
+# Forecast Results Tab
+with tabs[1]:
+    st.markdown('<div class="card-container">', unsafe_allow_html=True)
     st.header("Forecast Results")
     if st.session_state.forecast_results is not None and isinstance(st.session_state.forecast_results, pd.DataFrame) and not st.session_state.forecast_results.empty:
         if st.session_state.forecast_plot_fig is not None:
             st.plotly_chart(st.session_state.forecast_plot_fig, use_container_width=True)
-        else: st.warning("Forecast plot could not be generated. Displaying data table only.")
-        st.subheader("Forecast Data Table"); st.dataframe(st.session_state.forecast_results)
-    elif st.session_state.run_forecast_triggered: st.warning("Forecast process was run, but no results are available. Check errors.")
-    else: st.info("Run a forecast using the sidebar to see results here.")
+        else: 
+            st.warning("Forecast plot could not be generated. Displaying data table only.")
+        
+        st.subheader("Forecast Data Table")
+        st.dataframe(st.session_state.forecast_results, use_container_width=True)
+    elif st.session_state.run_forecast_triggered: 
+        st.warning("Forecast process was run, but no results are available. Check errors.")
+    else: 
+        st.info("Run a forecast using the sidebar to see results here.")
+    st.markdown('</div>', unsafe_allow_html=True)
 
-with evaluation_tab:
+# Model Evaluation Tab
+with tabs[2]:
+    st.markdown('<div class="card-container">', unsafe_allow_html=True)
     st.header("Model Evaluation")
     if st.session_state.evaluation_metrics is not None and isinstance(st.session_state.evaluation_metrics, dict):
         st.subheader("Performance Metrics (on validation or pseudo-validation set)")
@@ -492,129 +813,63 @@ with evaluation_tab:
         col1.metric("RMSE", f"{rmse_val:.4f}" if not np.isnan(rmse_val) else "N/A")
         col2.metric("MAE", f"{mae_val:.4f}" if not np.isnan(mae_val) else "N/A")
         col3.metric("MAPE", f"{mape_val:.2f}%" if not np.isnan(mape_val) and mape_val != np.inf else ("N/A" if np.isnan(mape_val) else "Inf"))
+        
         st.subheader("Training Loss (if model was trained in this session)")
         if st.session_state.training_history:
             loss_fig = create_loss_plot(st.session_state.training_history)
             st.plotly_chart(loss_fig, use_container_width=True)
-        else: st.info("No training history available (e.g., using a pre-trained model or training failed).")
-    elif st.session_state.run_forecast_triggered: st.warning("Forecast process was run, but no evaluation metrics are available. Check errors.")
-    else: st.info("Run a forecast to see model evaluation metrics here.")
+        else: 
+            st.info("No training history available (e.g., using a pre-trained model or training failed).")
+    elif st.session_state.run_forecast_triggered: 
+        st.warning("Forecast process was run, but no evaluation metrics are available. Check errors.")
+    else: 
+        st.info("Run a forecast to see model evaluation metrics here.")
+    st.markdown('</div>', unsafe_allow_html=True)
 
-if show_report_button:
-    if not gemini_configured: st.error("AI Report disabled. Configure Gemini API Key.")
-    elif st.session_state.cleaned_data is not None and st.session_state.forecast_results is not None and st.session_state.evaluation_metrics is not None:
-        with st.spinner(f"Generating AI report ({report_language})..."):
-            st.session_state.ai_report = generate_gemini_report(
-                st.session_state.cleaned_data, st.session_state.forecast_results,
-                st.session_state.evaluation_metrics, report_language
-            )
-        if st.session_state.ai_report and not st.session_state.ai_report.startswith("Error:"):
-            st.success("AI report generated.")
-        else: st.error(f"Failed to generate AI report. {st.session_state.ai_report}")
-        st.rerun()
-    else: st.error("Cleaned data, forecast results, and evaluation metrics must be available. Run a successful forecast first.")
-
-with ai_report_tab:
+# AI Report Tab
+with tabs[3]:
+    st.markdown('<div class="card-container">', unsafe_allow_html=True)
     st.header("AI-Generated Scientific Report")
-    if not gemini_configured: st.warning("AI features disabled. Configure Gemini API Key.")
-    if st.session_state.ai_report: st.markdown(st.session_state.ai_report)
-    else: st.info("Click \"Generate AI Report\" in the sidebar after a successful forecast.")
+    if not gemini_configured: 
+        st.warning("AI features disabled. Configure Gemini API Key.")
+    if st.session_state.ai_report: 
+        st.markdown(f'<div class="chat-message ai-message">{st.session_state.ai_report}<div class="copy-tooltip">Copied!</div></div>', unsafe_allow_html=True)
+    else: 
+        st.info("Click \"Generate AI Report\" in the sidebar after a successful forecast.")
+    st.markdown('</div>', unsafe_allow_html=True)
 
-with chat_tab:
+# AI Chatbot Tab
+with tabs[4]:
+    st.markdown('<div class="card-container">', unsafe_allow_html=True)
     st.header("AI Chatbot Assistant")
-    if not gemini_configured: st.warning("AI features disabled. Configure Gemini API Key.")
+    if not gemini_configured: 
+        st.warning("AI features disabled. Configure Gemini API Key.")
     elif st.session_state.chat_active:
         if st.session_state.cleaned_data is not None and st.session_state.forecast_results is not None and st.session_state.evaluation_metrics is not None:
             st.info("Chat activated. Ask about the results.")
-            for sender, message in st.session_state.chat_history:
-                with st.chat_message(sender.lower()): st.markdown(message)
+            
+            chat_container = st.container()
+            with chat_container:
+                for sender, message in st.session_state.chat_history:
+                    if sender == "User":
+                        st.markdown(f'<div class="chat-message user-message">{message}<div class="copy-tooltip">Copied!</div></div>', unsafe_allow_html=True)
+                    else:
+                        st.markdown(f'<div class="chat-message ai-message">{message}<div class="copy-tooltip">Copied!</div></div>', unsafe_allow_html=True)
+            
             user_input = st.chat_input("Ask the AI assistant:")
             if user_input:
                 st.session_state.chat_history.append(("User", user_input))
-                with st.chat_message("user"): st.markdown(user_input)
                 with st.spinner("AI thinking..."):
                     ai_response = get_gemini_chat_response(
                         user_input, st.session_state.chat_history, st.session_state.cleaned_data,
                         st.session_state.forecast_results, st.session_state.evaluation_metrics, st.session_state.ai_report
                     )
                 st.session_state.chat_history.append(("AI", ai_response))
-                with st.chat_message("ai"): st.markdown(ai_response)
                 st.rerun()
         else:
             st.warning("Run a successful forecast to provide context for the chatbot.")
-            st.session_state.chat_active = False; st.rerun()
+            st.session_state.chat_active = False
+            st.rerun()
     else:
         st.info("Click \"Activate/Deactivate Chat\" in sidebar (requires forecast results)." if gemini_configured else "AI Chat disabled.")
-
-if download_report_button:
-    if st.session_state.forecast_results is not None and st.session_state.evaluation_metrics is not None and st.session_state.ai_report is not None and st.session_state.forecast_plot_fig is not None:
-        with st.spinner("Generating PDF report..."):
-            try:
-                pdf = FPDF()
-                pdf.add_page()
-                font_path_dejavu = "/usr/share/fonts/truetype/dejavu/DejaVuSans.ttf"
-                report_font = "Arial" # Fallback font
-                if os.path.exists(font_path_dejavu):
-                    try: 
-                        pdf.add_font("DejaVu", fname=font_path_dejavu, uni=True)
-                        report_font = "DejaVu"
-                    except RuntimeError as font_err:
-                        st.warning(f"Failed to add DejaVu font ({font_err}), using Arial.")
-                else: 
-                    st.warning(f"DejaVu font not found at {font_path_dejavu}, using Arial. For better PDF character support on Render, consider adding a .ttf font to your repo and referencing it, or installing fonts via a build script.")
-                
-                pdf.set_font(report_font, size=12)
-                pdf.cell(0, 10, txt="Groundwater Level Forecast Report", new_x="LMARGIN", new_y="NEXT", align="C"); pdf.ln(5)
-
-                plot_filename = "forecast_plot.png"
-                try:
-                    st.session_state.forecast_plot_fig.write_image(plot_filename, scale=2)
-                    img_width_mm = 190 
-                    pdf.image(plot_filename, x=pdf.get_x(), y=pdf.get_y(), w=img_width_mm)
-                    pdf.ln(125) # Adjust based on typical plot height
-                except Exception as img_err: 
-                    st.warning(f"Could not save/embed plot image: {img_err}. Plot omitted from PDF.")
-                finally:
-                    if os.path.exists(plot_filename): os.remove(plot_filename)
-
-                pdf.set_font(report_font, "B", size=11); pdf.cell(0, 10, txt="Model Evaluation Metrics", new_x="LMARGIN", new_y="NEXT"); pdf.ln(1)
-                pdf.set_font(report_font, size=10)
-                for key, value in st.session_state.evaluation_metrics.items():
-                    val_str = f"{value:.4f}" if isinstance(value, (float, np.floating)) and not np.isnan(value) else str(value)
-                    pdf.cell(0, 8, txt=f"{key}: {val_str}", new_x="LMARGIN", new_y="NEXT")
-                pdf.ln(5)
-
-                pdf.set_font(report_font, "B", size=11); pdf.cell(0, 10, txt="Forecast Data (First 10 points)", new_x="LMARGIN", new_y="NEXT"); pdf.ln(1)
-                pdf.set_font(report_font, size=8); col_widths = [35, 35, 35, 35]
-                pdf.cell(col_widths[0], 7, txt="Date", border=1)
-                pdf.cell(col_widths[1], 7, txt="Forecast", border=1)
-                pdf.cell(col_widths[2], 7, txt="Lower CI", border=1)
-                pdf.cell(col_widths[3], 7, txt="Upper CI", border=1, new_x="LMARGIN", new_y="NEXT")
-                for _, row in st.session_state.forecast_results.head(10).iterrows():
-                    pdf.cell(col_widths[0], 6, txt=str(row["Date"].date()), border=1)
-                    pdf.cell(col_widths[1], 6, txt=f"{row['Forecast']:.2f}", border=1)
-                    pdf.cell(col_widths[2], 6, txt=f"{row['Lower_CI']:.2f}", border=1)
-                    pdf.cell(col_widths[3], 6, txt=f"{row['Upper_CI']:.2f}", border=1, new_x="LMARGIN", new_y="NEXT")
-                pdf.ln(5)
-
-                pdf.set_font(report_font, "B", size=11); pdf.cell(0, 10, txt=f"AI-Generated Report ({report_language})", new_x="LMARGIN", new_y="NEXT"); pdf.ln(1)
-                pdf.set_font(report_font, size=10)
-                pdf.multi_cell(0, 5, txt=st.session_state.ai_report)
-                pdf.ln(5)
-
-                pdf_output_bytes = pdf.output(dest="S").encode("latin-1")
-                # b64_pdf = base64.b64encode(pdf_output_bytes).decode() # Not needed for direct download
-                st.sidebar.download_button(
-                    label="Download PDF Report Now", # Changed label to be more direct
-                    data=pdf_output_bytes,
-                    file_name="groundwater_forecast_report.pdf",
-                    mime="application/octet-stream",
-                    key="pdf_download_final_btn" # Added a unique key
-                )
-                st.success("PDF report ready. Click the download button in the sidebar.")
-            except Exception as pdf_err:
-                st.error(f"Failed to generate PDF report: {pdf_err}")
-                import traceback; st.error(traceback.format_exc())
-    else:
-        st.error("Required data for PDF report is missing. Run a forecast and generate AI report first.")
-
+    st.markdown('</div>', unsafe_allow_html=True)
