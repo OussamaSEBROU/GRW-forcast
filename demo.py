@@ -16,41 +16,43 @@ import base64
 import time
 import os
 
-#--- Page Configuration ---
-
+# --- Page Configuration ---
 st.set_page_config(page_title="Groundwater Forecast App", layout="wide")
 
-#--- Gemini API Configuration ---
+# --- Gemini API Configuration ---
 
-GEMINI_API_KEY = os.getenv("GOOGLE_API_KEY") 
+GEMINI_API_KEY = os.getenv("GOOGLE_API_KEY")
 gemini_configured = False
 
-if GEMINI_API_KEY and GEMINI_API_KEY != "Gemini_api_key": try: # Configure Gemini with the API key genai.configure(api_key=GEMINI_API_KEY)
+if GEMINI_API_KEY and GEMINI_API_KEY != "Gemini_api_key":
+    try:
+        # Configure Gemini with the API key
+        genai.configure(api_key=GEMINI_API_KEY)
 
-# Load Gemini models with custom generation settings
-    generation_config = genai.types.GenerationConfig(
-        temperature=0.7,
-        top_p=0.95,
-        top_k=40,
-        max_output_tokens=4000
-    )
+        # Load Gemini models with custom generation settings
+        generation_config = genai.types.GenerationConfig(
+            temperature=0.7,
+            top_p=0.95,
+            top_k=40,
+            max_output_tokens=4000
+        )
 
-    gemini_model_report = genai.GenerativeModel(
-        model_name="gemini-2.0-flash-thinking-exp-01-21",
-        generation_config=generation_config
-    )
+        gemini_model_report = genai.GenerativeModel(
+            model_name="gemini-2.0-flash-thinking-exp-01-21",
+            generation_config=generation_config
+        )
 
-    gemini_model_chat = genai.GenerativeModel(
-        model_name="gemini-2.0-flash-thinking-exp-01-21",
-        generation_config=generation_config
-    )
+        gemini_model_chat = genai.GenerativeModel(
+            model_name="gemini-2.0-flash-thinking-exp-01-21",
+            generation_config=generation_config
+        )
 
-    gemini_configured = True
+        gemini_configured = True
 
-except Exception as e:
-    st.error(f"Error configuring Gemini API: {e}. AI features might be limited.")
-
-else: st.warning("Gemini API Key not found or is placeholder. AI features will be disabled. Set GEMINI_API_KEY environment variable or update in code.")
+    except Exception as e:
+        st.error(f"Error configuring Gemini API: {e}. AI features might be limited.")
+else:
+    st.warning("Gemini API Key not found or is placeholder. AI features will be disabled. Set GEMINI_API_KEY environment variable or update in code.")
 
 
 
