@@ -55,7 +55,7 @@ else: st.warning("Gemini API Key not found or is placeholder. AI features will b
 
 # --- Model Paths & Constants ---
 # Ensure this path is relative to the app.py file for deployment
-STANDARD_MODEL_DIR = "standard_model.h5'
+STANDARD_MODEL_DIR = "standard_model.h5"
 STANDARD_MODEL_FILENAME = "standard_model.h5"
 STANDARD_MODEL_PATH = os.path.join(STANDARD_MODEL_DIR, STANDARD_MODEL_FILENAME)
 
