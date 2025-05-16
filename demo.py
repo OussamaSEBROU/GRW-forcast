@@ -237,12 +237,12 @@ if GEMINI_API_KEY and GEMINI_API_KEY != "Gemini_api_key":
         )
 
         gemini_model_report = genai.GenerativeModel(
-            model_name="gemini-2.5-pro-preview-05-06",
+            model_name="gemini-2.0-flash-thinking-exp-01-21",
             generation_config=generation_config
         )
-
+          
         gemini_model_chat = genai.GenerativeModel(
-            model_name="gemini-2.5-pro-preview-05-06",
+            model_name="gemini-2.0-flash-thinking-exp-01-21",
             generation_config=generation_config
         )
 
