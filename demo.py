@@ -20,32 +20,40 @@ import os
 st.set_page_config(page_title="Groundwater Forecast App", layout="wide")
 
 # --- Gemini API Configuration ---
-# --- Gemini API Configuration ---
 
-# Configure Gemini with your API key
-google_api_key = os.getenv("GOOGLE_API_KEY")
+# Load Gemini API key
+GEMINI_API_KEY = os.getenv("GEMINI_API_KEY", "Gemini_api_key")
 gemini_configured = False
 
-if google_api_key:
+if GEMINI_API_KEY and GEMINI_API_KEY != "Gemini_api_key":
     try:
-        genai.configure(api_key=google_api_key)
+        # Configure Gemini with the API key
+        genai.configure(api_key=GEMINI_API_KEY)
         
-        # Load Gemini model with custom configuration
-        model_text = genai.GenerativeModel(
+        # Load Gemini models with custom generation settings
+        generation_config = genai.types.GenerationConfig(
+            temperature=0.7,
+            top_p=0.95,
+            top_k=40,
+            max_output_tokens=4000
+        )
+        
+        gemini_model_report = genai.GenerativeModel(
             model_name="gemini-2.0-flash-thinking-exp-01-21",
-            generation_config=genai.types.GenerationConfig(
-                temperature=0.7,
-                top_p=0.95,
-                top_k=40,
-                max_output_tokens=4000  # Increased token limit for deeper, longer responses
-            )
+            generation_config=generation_config
+        )
+        
+        gemini_model_chat = genai.GenerativeModel(
+            model_name="gemini-2.0-flash-thinking-exp-01-21",
+            generation_config=generation_config
         )
         
         gemini_configured = True
+
     except Exception as e:
         st.error(f"Error configuring Gemini API: {e}. AI features might be limited.")
 else:
-    st.warning("Google API Key not found. AI features will be disabled. Set GOOGLE_API_KEY as an environment variable.")
+    st.warning("Gemini API Key not found or is placeholder. AI features will be disabled. Set GEMINI_API_KEY environment variable or update in code.")
 
 # --- Model Paths & Constants ---
 # Ensure this path is relative to the app.py file for deployment
