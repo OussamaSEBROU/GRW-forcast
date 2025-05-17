@@ -8,4 +8,6 @@ openpyxl
 fpdf2
 google-generativeai
 kaleido
-
+firebase-admin
+python-dotenv
+requests
